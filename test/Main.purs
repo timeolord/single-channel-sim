@@ -1,12 +1,19 @@
 module Test.Main where
 
 import Prelude
-import Test.Assert (assert)
+
 import Effect (Effect)
 import Effect.Class.Console (log)
+import Matrix as M
+import Test.QuickCheck (quickCheck)
 
 main :: Effect Unit
 main = do
-  log "🍝"
-  log "You should add some tests."
-  assert (true == true)
+  testMatrix
+
+testMatrix :: Effect Unit
+testMatrix = do
+    log "Testing Matrix Transpose"
+    quickCheck (\(m :: M.Matrix _ _ Int) -> m == M.transpose (M.transpose m))
+
+

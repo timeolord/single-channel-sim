@@ -13,13 +13,16 @@ to generate this file without the comments in this block.
 { name = "my-project"
 , dependencies =
   [ "arrays"
-  , "assert"
   , "console"
   , "effect"
   , "foldable-traversable"
-  , "lists"
+  , "gen"
   , "maybe"
+  , "nonempty"
+  , "partial"
   , "prelude"
+  , "quickcheck"
+  , "strings"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]
