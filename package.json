@@ -1,12 +1,14 @@
 {
   "dependencies": {
-    "esbuild": "^0.15.9"
+    "esbuild": "^0.15.9",
+    "long": "^5.2.1"
   },
   "name": "single-channel-sim",
   "description": "A simulator for a single channel for educational use.",
   "version": "1.0.0",
   "main": "index.js",
   "devDependencies": {},
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
