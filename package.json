@@ -1,5 +1,23 @@
 {
   "dependencies": {
     "esbuild": "^0.15.9"
-  }
+  },
+  "name": "single-channel-sim",
+  "description": "A simulator for a single channel for educational use.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timeolord/single-channel-sim.git"
+  },
+  "author": "Allan Wei",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/timeolord/single-channel-sim/issues"
+  },
+  "homepage": "https://github.com/timeolord/single-channel-sim#readme"
 }
