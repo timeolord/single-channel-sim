@@ -663,29 +663,6 @@ Module[{tstep, stateList, conductivityList, initStateNr,
         sigmaG, filterN, filterA,
         sampledCurrent, graph1, filteredCurrent, graph2},
 tstep = 1 / samplingfreq; (* ms *)
-If[duration > tmax,
-   Message[ColquhounHawkesMC::pulselen, duration, tmax];
-   Return[$Failed]
-];
-If[tstep > duration / 5,
-   Message[ColquhounHawkesMC::stepsz, tstep];
-   Return[$Failed]
-];
-If[samplingfreq < 0,
-   Message[ColquhounHawkesMC::negative, samplingfreq];
-   Return[$Failed]
-];
-If[fc < 0,
-   Message[ColquhounHawkesMC::negative, fc];
-   Return[$Failed]
-];
-stateList = First[Transpose[sclist]];
-conductivityList = Last[Transpose[sclist]];
-If[Not[MemberQ[stateList, initstate]],
-   Message[ColquhounHawkesMC::nomem, initstate, stateList];
-   Return[$Failed]
-];
-initStateNr = First[Flatten[Position[stateList, initstate]]];
 
 (* initialize filter parameters *)
 
@@ -695,8 +672,7 @@ sigmaG = 0.1325 / (fc / samplingfreq);
 filterN = Round[4 sigmaG];
          (* number of filter terms = 1 + 2 filterN *)
 
-filterA =
-Map[N[1 / (Sqrt[2 Pi] sigmaG) E^(-#^2 / (2 sigmaG^2))] &,
+filterA = Map[N[1 / (Sqrt[2 Pi] sigmaG) E^(-#^2 / (2 sigmaG^2))] &,
     Range[-filterN, filterN]]; (* raw filter coefficients *)
 
 filterA /= Plus @@ filterA; (* adjust normalization:
@@ -710,8 +686,7 @@ m CMeanCurrent[Flatten[q /. c[t] -> height],
                m, N[u], {N[tmax + filterN tstep], N[tstep]}]
                  ];
    
-graph1 = ListPlot[Drop[Drop[
-                  sampledCurrent, filterN], -filterN],
+graph1 = ListPlot[Drop[Drop[sampledCurrent, filterN], -filterN],
                   PlotJoined -> True,
                   PlotRange ->
                   {-m u Max[Transpose[sclist][[2]]], 0},
@@ -722,8 +697,7 @@ graph1 = ListPlot[Drop[Drop[
    
 (* apply Gaussian filter on sampledCurrent *)
 
-filteredCurrent = Map[# . filterA &,
-Partition[sampledCurrent, 1 + 2 filterN, 1]];
+filteredCurrent = Map[# . filterA &, Partition[sampledCurrent, 1 + 2 filterN, 1]];
 
 graph2 = ListPlot[filteredCurrent, PlotJoined -> True,
                   PlotRange ->

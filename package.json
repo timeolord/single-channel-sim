@@ -1,16 +1,21 @@
 {
   "dependencies": {
+    "@cubejs-client/core": "^0.31.0",
+    "chart.js": "^3.9.1",
     "esbuild": "^0.15.9",
-    "long": "^5.2.1"
+    "vue-chartjs": "^4.1.2"
   },
   "name": "single-channel-sim",
   "description": "A simulator for a single channel for educational use.",
   "version": "1.0.0",
-  "main": "index.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "parcel": "^2.6.2"
+  },
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html"
   },
   "repository": {
     "type": "git",
