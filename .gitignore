@@ -10,4 +10,4 @@
 /.spago
 /.parcel-cache
 /.spago
-/legacy_code
+/legacy_code*
