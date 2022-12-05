@@ -11,3 +11,5 @@
 /.parcel-cache
 /.spago
 /legacy_code*
+/dist
+/.cache
