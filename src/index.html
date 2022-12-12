@@ -6,8 +6,7 @@
   </head>
   <body>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="index.js"></script>
+    <script type="module" src="index.js"></script>
 
     <div class="slidecontainer">
       <p>n</p>
@@ -23,31 +22,6 @@
     <div style="width: 90vw;" id="graphs">
       <canvas id="histogram"></canvas>
       <canvas id="meancurrent"></canvas>
-      <canvas id="singletrace"></canvas>
-      <canvas id="unfiltered"></canvas>
-      <canvas id="filtered"></canvas>
     </div>
-    <script>
-      const { createApp } = Vue
-      createApp({
-        data() {
-          return defaultMetadata()
-        },
-        watch: defaultWatch(),
-        methods: defaultMethods(),
-        mounted() {
-          this.drawGraphs()
-          setSliderCallbacks(this)
-        },
-        computed: {
-          qflatpulse() {
-            return qMatrix(this.height)
-          },
-          qPause() {
-            return qMatrix(0)
-          }
-        }
-      }).mount('#graphs')
-    </script>
   </body>
 </html>
