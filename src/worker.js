@@ -152,7 +152,7 @@ function peakEPSCs(ensembleSize, qflatpulse, qflatpause, conductivityList, inita
 onmessage = (e) => {
     e.data.clist = JSON.parse(e.data.clist)
     e.data.meancurrent = meancurrent(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep)
-    e.data.peakEPSCs = peakEPSCs(e.data.ensembleSize, e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.samplingFrequency, e.data.cutoffFrequency)
+    //e.data.peakEPSCs = peakEPSCs(e.data.ensembleSize, e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.samplingFrequency, e.data.cutoffFrequency)
     postMessage(e.data)
   }
   

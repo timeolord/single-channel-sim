@@ -589,7 +589,7 @@ function drawTrace(data, elementID, timeStep, title, metadata) {
                 },
                 subtitle: {
                     display: true,
-                    text: `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`,
+                    text: `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`,
                     padding: {
                         bottom: 20
                     }
@@ -617,70 +617,13 @@ function updateTrace(chart, data, timeStep, metadata) {
     chart.data.labels = [
         ...Array(data.length).keys()
     ].map((x)=>(x * timeStep).toFixed(1));
-    chart.options.plugins.subtitle.text = `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`;
-    chart.update();
-}
-function drawHistrogram(data, elementID, metadata) {
-    return new (0, _autoDefault.default)(document.getElementById(elementID), {
-        type: "bar",
-        data: {
-            labels: [
-                ...Array(data.length).keys()
-            ],
-            datasets: [
-                {
-                    label: `Peak EPSC Frequency`,
-                    data: data
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                title: {
-                    display: true,
-                    text: `Peak EPSC Amplitiude Distribution`
-                },
-                subtitle: {
-                    display: true,
-                    text: `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`,
-                    padding: {
-                        bottom: 20
-                    }
-                },
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    title: {
-                        display: true,
-                        text: "Frequency"
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: "Current (pA)"
-                    }
-                }
-            }
-        }
-    });
-}
-function updateHistogram(chart, data, metadata) {
-    chart.data.datasets[0].data = data;
-    chart.data.labels = [
-        ...Array(data.length).keys()
-    ];
-    chart.options.plugins.subtitle.text = `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`;
+    chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`;
     chart.update();
 }
 function defaultMetadata() {
     return {
-        n: 200,
-        ensembleSize: 100,
+        n: 20,
+        //ensembleSize: 100,
         samplingFrequency: 40,
         cutoffFrequency: 3,
         duration: 1,
@@ -716,8 +659,6 @@ function defaultWatch() {
 function defaultMethods() {
     return {
         drawGraphs () {
-            //let data = peakEPSCs(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.n, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-            //console.log(JSON.stringify(this.clist));
             let message = {
                 ensembleSize: this.ensembleSize,
                 qflatpulse: this.qflatpulse,
@@ -734,14 +675,8 @@ function defaultMethods() {
             };
             worker.postMessage(message);
             worker.onmessage = (e)=>{
-                window.histogram = drawHistrogram(e.data.peakEPSCs, "histogram", e.data);
                 window.meangraph = drawTrace(e.data.meancurrent, "meancurrent", e.data.timeStep, "Mean Current", e.data);
             };
-        //data = singletrace(this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.timeStep)
-        //window.singlegraph = drawTrace(data, "singletrace", this.timeStep, "Single Trace", this)
-        //data = filtertest(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-        //window.filtered = drawTrace(data.filteredCurrent, "filtered", data.timeStep, "Filtered Mean Current", this)
-        //window.unfiltered = drawTrace(data.unfilteredCurrent, "unfiltered", data.timeStep, "Unfiltered Mean Current", this)
         },
         updateGraphs () {
             let message = {
@@ -761,18 +696,8 @@ function defaultMethods() {
             worker.postMessage(message);
             worker.onmessage = (e)=>{
                 console.log(e);
-                updateHistogram(window.histogram, e.data.peakEPSCs, e.data);
                 updateTrace(window.meangraph, e.data.meancurrent, e.data.timeStep, e.data);
             };
-        //let data = peakEPSCs(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.n, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-        //updateHistogram(histogram, data, this)
-        //data = singletrace(this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.timeStep)
-        //updateTrace(singlegraph, data, this.timeStep, this)
-        //data = meancurrent(this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.n, this.u, this.maxTime, this.timeStep)
-        //updateTrace(meangraph, data, this.timeStep, this)
-        //data = filtertest(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-        //updateTrace(filtered, data.filteredCurrent, data.timeStep, this)
-        //updateTrace(unfiltered, data.unfilteredCurrent, data.timeStep, this)
         }
     };
 }
@@ -781,12 +706,12 @@ function setSliderCallbacks(metadata) {
     sliders.forEach((slider)=>{
         slider.addEventListener("input", (event)=>{
             let id = event.target.id;
-            let value = parseInt(event.target.value);
+            let value = parseFloat(event.target.value);
             metadata[id] = value;
         });
     });
 }
-if (window.Worker) var worker = new Worker(require("d9480e22184999c7"));
+if (window.Worker) var worker = new Worker(require("e3ed670e31db35f5"));
 const { createApp  } = Vue;
 createApp({
     data () {
@@ -844,94 +769,7 @@ createApp({
  //})()
 ;
 
-},{"d9480e22184999c7":"gzyyS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3","chart.js/auto":"hCqnV"}],"gzyyS":[function(require,module,exports) {
-let workerURL = require("./helpers/get-worker-url");
-let bundleURL = require("./helpers/bundle-url");
-let url = bundleURL.getBundleURL("bLxZJ") + "worker.e4bcec20.js" + "?" + Date.now();
-module.exports = workerURL(url, bundleURL.getOrigin(url), false);
-
-},{"./helpers/get-worker-url":"cn2gM","./helpers/bundle-url":"lgJ39"}],"cn2gM":[function(require,module,exports) {
-"use strict";
-module.exports = function(workerUrl, origin, isESM) {
-    if (origin === self.location.origin) // If the worker bundle's url is on the same origin as the document,
-    // use the worker bundle's own url.
-    return workerUrl;
-    else {
-        // Otherwise, create a blob URL which loads the worker bundle with `importScripts`.
-        var source = isESM ? "import " + JSON.stringify(workerUrl) + ";" : "importScripts(" + JSON.stringify(workerUrl) + ");";
-        return URL.createObjectURL(new Blob([
-            source
-        ], {
-            type: "application/javascript"
-        }));
-    }
-};
-
-},{}],"lgJ39":[function(require,module,exports) {
-"use strict";
-var bundleURL = {};
-function getBundleURLCached(id) {
-    var value = bundleURL[id];
-    if (!value) {
-        value = getBundleURL();
-        bundleURL[id] = value;
-    }
-    return value;
-}
-function getBundleURL() {
-    try {
-        throw new Error();
-    } catch (err) {
-        var matches = ("" + err.stack).match(/(https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/[^)\n]+/g);
-        if (matches) // The first two stack frames will be this function and getBundleURLCached.
-        // Use the 3rd one, which will be a runtime in the original bundle.
-        return getBaseURL(matches[2]);
-    }
-    return "/";
-}
-function getBaseURL(url) {
-    return ("" + url).replace(/^((?:https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/.+)\/[^/]+$/, "$1") + "/";
-} // TODO: Replace uses with `new URL(url).origin` when ie11 is no longer supported.
-function getOrigin(url) {
-    var matches = ("" + url).match(/(https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/[^/]+/);
-    if (!matches) throw new Error("Origin not found");
-    return matches[0];
-}
-exports.getBundleURL = getBundleURLCached;
-exports.getBaseURL = getBaseURL;
-exports.getOrigin = getOrigin;
-
-},{}],"gkKU3":[function(require,module,exports) {
-exports.interopDefault = function(a) {
-    return a && a.__esModule ? a : {
-        default: a
-    };
-};
-exports.defineInteropFlag = function(a) {
-    Object.defineProperty(a, "__esModule", {
-        value: true
-    });
-};
-exports.exportAll = function(source, dest) {
-    Object.keys(source).forEach(function(key) {
-        if (key === "default" || key === "__esModule" || dest.hasOwnProperty(key)) return;
-        Object.defineProperty(dest, key, {
-            enumerable: true,
-            get: function() {
-                return source[key];
-            }
-        });
-    });
-    return dest;
-};
-exports.export = function(dest, destName, get) {
-    Object.defineProperty(dest, destName, {
-        enumerable: true,
-        get: get
-    });
-};
-
-},{}],"hCqnV":[function(require,module,exports) {
+},{"chart.js/auto":"hCqnV","e3ed670e31db35f5":"gzyyS","@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"hCqnV":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 var _chartMjs = require("../dist/chart.mjs");
@@ -13609,6 +13447,93 @@ function styleChanged(style, prevStyle) {
     return prevStyle && JSON.stringify(style) !== JSON.stringify(prevStyle);
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}]},["ShInH","8lqZg"], "8lqZg", "parcelRequire33fa")
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
+exports.interopDefault = function(a) {
+    return a && a.__esModule ? a : {
+        default: a
+    };
+};
+exports.defineInteropFlag = function(a) {
+    Object.defineProperty(a, "__esModule", {
+        value: true
+    });
+};
+exports.exportAll = function(source, dest) {
+    Object.keys(source).forEach(function(key) {
+        if (key === "default" || key === "__esModule" || dest.hasOwnProperty(key)) return;
+        Object.defineProperty(dest, key, {
+            enumerable: true,
+            get: function() {
+                return source[key];
+            }
+        });
+    });
+    return dest;
+};
+exports.export = function(dest, destName, get) {
+    Object.defineProperty(dest, destName, {
+        enumerable: true,
+        get: get
+    });
+};
+
+},{}],"gzyyS":[function(require,module,exports) {
+let workerURL = require("./helpers/get-worker-url");
+let bundleURL = require("./helpers/bundle-url");
+let url = bundleURL.getBundleURL("bLxZJ") + "worker.e4bcec20.js" + "?" + Date.now();
+module.exports = workerURL(url, bundleURL.getOrigin(url), false);
+
+},{"./helpers/get-worker-url":"cn2gM","./helpers/bundle-url":"lgJ39"}],"cn2gM":[function(require,module,exports) {
+"use strict";
+module.exports = function(workerUrl, origin, isESM) {
+    if (origin === self.location.origin) // If the worker bundle's url is on the same origin as the document,
+    // use the worker bundle's own url.
+    return workerUrl;
+    else {
+        // Otherwise, create a blob URL which loads the worker bundle with `importScripts`.
+        var source = isESM ? "import " + JSON.stringify(workerUrl) + ";" : "importScripts(" + JSON.stringify(workerUrl) + ");";
+        return URL.createObjectURL(new Blob([
+            source
+        ], {
+            type: "application/javascript"
+        }));
+    }
+};
+
+},{}],"lgJ39":[function(require,module,exports) {
+"use strict";
+var bundleURL = {};
+function getBundleURLCached(id) {
+    var value = bundleURL[id];
+    if (!value) {
+        value = getBundleURL();
+        bundleURL[id] = value;
+    }
+    return value;
+}
+function getBundleURL() {
+    try {
+        throw new Error();
+    } catch (err) {
+        var matches = ("" + err.stack).match(/(https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/[^)\n]+/g);
+        if (matches) // The first two stack frames will be this function and getBundleURLCached.
+        // Use the 3rd one, which will be a runtime in the original bundle.
+        return getBaseURL(matches[2]);
+    }
+    return "/";
+}
+function getBaseURL(url) {
+    return ("" + url).replace(/^((?:https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/.+)\/[^/]+$/, "$1") + "/";
+} // TODO: Replace uses with `new URL(url).origin` when ie11 is no longer supported.
+function getOrigin(url) {
+    var matches = ("" + url).match(/(https?|file|ftp|(chrome|moz|safari-web)-extension):\/\/[^/]+/);
+    if (!matches) throw new Error("Origin not found");
+    return matches[0];
+}
+exports.getBundleURL = getBundleURLCached;
+exports.getBaseURL = getBaseURL;
+exports.getOrigin = getOrigin;
+
+},{}]},["ShInH","8lqZg"], "8lqZg", "parcelRequire33fa")
 
 //# sourceMappingURL=index.975ef6c8.js.map

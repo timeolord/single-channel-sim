@@ -35,7 +35,7 @@ function drawTrace(data, elementID, timeStep, title, metadata){
             },
             subtitle: {
               display: true,
-              text: `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`,
+              text: `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`,
               padding: {
                 bottom: 20
               }
@@ -62,69 +62,14 @@ function drawTrace(data, elementID, timeStep, title, metadata){
 function updateTrace(chart, data, timeStep, metadata){
   chart.data.datasets[0].data = data
   chart.data.labels = [...Array(data.length).keys()].map(x => (x * timeStep).toFixed(1))
-  chart.options.plugins.subtitle.text = `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`
+  chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
-function drawHistrogram(data, elementID, metadata){
-  return new Chart(
-    document.getElementById(elementID),
-    {
-      type: 'bar',
-      data: {
-        labels: [...Array(data.length).keys()],
-        datasets: [
-          {
-            label: `Peak EPSC Frequency`,
-            data: data
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-            title: {
-                display: true,
-                text: `Peak EPSC Amplitiude Distribution`
-            },
-            subtitle: {
-                display: true,
-                text: `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`,
-                padding: {
-                  bottom: 20
-                }
-            },
-            legend: {
-              display: false
-            }
-        },
-        scales: {
-          y: {
-            title: {
-              display: true,
-              text: 'Frequency'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: 'Current (pA)'
-            }
-          },
-        }
-      }
-    }
-  )
-}
-function updateHistogram(chart, data, metadata){
-  chart.data.datasets[0].data = data
-  chart.data.labels = [...Array(data.length).keys()]
-  chart.options.plugins.subtitle.text = `emsemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms, sampling frequency = ${metadata.samplingFrequency} kHz, cutoff frequency = ${metadata.cutoffFrequency} kHz`
-  chart.update()
-}
+
 function defaultMetadata(){
   return {
-    n: 200,
-    ensembleSize: 100,
+    n: 20,
+    //ensembleSize: 100,
     samplingFrequency: 40,
     cutoffFrequency: 3,
     duration: 1,
@@ -160,8 +105,6 @@ function defaultWatch(){
 function defaultMethods(){
   return {
     drawGraphs() {
-      //let data = peakEPSCs(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.n, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-      //console.log(JSON.stringify(this.clist));
       let message = {
         ensembleSize: this.ensembleSize,
         qflatpulse: this.qflatpulse,
@@ -178,15 +121,8 @@ function defaultMethods(){
       }
       worker.postMessage(message)
       worker.onmessage = (e) => {
-        window.histogram = drawHistrogram(e.data.peakEPSCs, "histogram", e.data)
         window.meangraph = drawTrace(e.data.meancurrent, "meancurrent", e.data.timeStep, "Mean Current", e.data)
       }
-      //data = singletrace(this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.timeStep)
-      //window.singlegraph = drawTrace(data, "singletrace", this.timeStep, "Single Trace", this)
-
-      //data = filtertest(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-      //window.filtered = drawTrace(data.filteredCurrent, "filtered", data.timeStep, "Filtered Mean Current", this)
-      //window.unfiltered = drawTrace(data.unfilteredCurrent, "unfiltered", data.timeStep, "Unfiltered Mean Current", this)
     },
     updateGraphs() {
 
@@ -207,21 +143,8 @@ function defaultMethods(){
       worker.postMessage(message)
       worker.onmessage = (e) => {
         console.log(e)
-        updateHistogram(window.histogram, e.data.peakEPSCs, e.data)
         updateTrace(window.meangraph, e.data.meancurrent, e.data.timeStep, e.data)
       }
-      //let data = peakEPSCs(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.n, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-      //updateHistogram(histogram, data, this)
-
-      //data = singletrace(this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.timeStep)
-      //updateTrace(singlegraph, data, this.timeStep, this)
-
-      //data = meancurrent(this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.n, this.u, this.maxTime, this.timeStep)
-      //updateTrace(meangraph, data, this.timeStep, this)
-
-      //data = filtertest(this.ensembleSize, this.qflatpulse, this.qPause, this.clist, this.initalState, this.duration, this.u, this.maxTime, this.samplingFrequency, this.cutoffFrequency)
-      //updateTrace(filtered, data.filteredCurrent, data.timeStep, this)
-      //updateTrace(unfiltered, data.unfilteredCurrent, data.timeStep, this)
     }
   }
 }
@@ -230,7 +153,7 @@ function setSliderCallbacks(metadata){
   sliders.forEach((slider) => {
     slider.addEventListener("input", (event) => {
       let id = event.target.id
-      let value = parseInt(event.target.value)
+      let value = parseFloat(event.target.value)
       metadata[id] = value
     })
   })
