@@ -267,7 +267,7 @@ function defaultWatch(){
   }
 }
 function getMessage(metadata){
-  return message = {
+  return {
     ensembleSize: metadata.ensembleSize,
     qflatpulse: metadata.qflatpulse,
     qPause: metadata.qPause,
