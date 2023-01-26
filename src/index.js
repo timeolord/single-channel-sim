@@ -130,7 +130,7 @@ function modelPlotTransform(data, model){
   return data.map(({ x, y }) => ({x:x , y: model.predictY(model.getTerms(), parseFloat(x))})).sort((a, b) => a.x - b.x)
 }
 function drawScatter(elementID, dataset, model, title, metadata, modelVisibility){
-  data = {
+  const data = {
     datasets: [{
       type: 'scatter',
       label: title,
@@ -220,7 +220,7 @@ function updateTraces(chart, data, timeStep, metadata){
 }
 import PolynomialRegression from "js-polynomial-regression"
 function CVfit(data){
-  let model = PolynomialRegression.read(data.map(({x, y}) => ({x: parseFloat(x), y: parseFloat(y)})), 2)
+  const model = PolynomialRegression.read(data.map(({x, y}) => ({x: parseFloat(x), y: parseFloat(y)})), 2)
   return model
 }
 
