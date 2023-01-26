@@ -8,16 +8,52 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="/index.975ef6c8.js" defer=""></script>
 
-    <div class="slidecontainer">
-      <p>n</p>
-      <input type="range" min="5" max="50" value="20" class="slider" id="n">
-      <p>duration</p>
-      <input type="range" min="0.1" max="5.0" value="1.0" step="0.1" class="slider" id="duration">
-      <p>max time</p>
-      <input type="range" min="1" max="50" value="10" class="slider" id="maxTime">
-    </div>
-    <div style="width: 90vw" id="graphs">
-      <canvas id="meancurrent"></canvas>
+    <div id="vueApp"></div>
+    <style>.flex-container {
+  flex-flow: wrap;
+  display: flex;
+}
+
+</style>
+    <div class="flex-container">
+      <div style="width: 49vw">
+        <canvas id="singletraces"></canvas>
+        <div class="flex-container">
+          <div>
+            <p>n</p>
+            <input type="range" min="5" max="50" value="20" class="slider" id="n">
+          </div>
+          <div>
+            <p>duration</p>
+            <input type="range" min="0.1" max="5.0" value="1.0" step="0.1" class="slider" id="duration">
+          </div>
+          <div>
+            <p>max time</p>
+            <input type="range" min="1" max="50" value="10" class="slider" id="maxTime">
+          </div>
+          <div>
+            <p>noise amplitude</p>
+            <input type="range" min="0" max="1.0" value="0" step="0.1" class="slider" id="singlechannelNoise">
+          </div>
+          <div>
+            <p>random seed</p>
+            <input type="range" min="0" max="10" value="0" class="slider" id="randomSeed">
+          </div>
+        </div>
+      </div>
+      <div style="width: 49vw">
+        <canvas id="CV"></canvas>
+        <div class="flex-container">
+          <div>
+            <p>ensemble size</p>
+            <input type="range" min="10" max="100" value="10" class="slider" id="ensembleSize">
+          </div>
+          <div>
+            <p>model visibility</p>
+            <input type="checkbox" id="modelVisibility">
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
