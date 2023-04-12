@@ -130,12 +130,15 @@ function singletrace(qflatpulse, qflatpause, conductivityList, initalState, dura
 function tracetable(qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, timeStep, noise){
     return range(0, n).map(() => singletrace(qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, timeStep, noise))
 }
+function addvector(a, b){
+  return a.map((x, i) => x + b[i])
+}
 function meancurrent(qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, timeStep){
-    function addvector(a, b){
-      return a.map((x, i) => x + b[i])
-    }
     let tracetableResult = tracetable(qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, timeStep)
     return tracetableResult.reduce((a, b) => addvector(a, b)).map(x => x / n)
+}
+function meancurrent2(traces, n) {
+  return traces.reduce((a, b) => addvector(a, b)).map(x => x / n)
 }
 function filtertest(ensembleSize, qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, samplingFrequency, cutoffFrequency){
     let timeStep = 1 / samplingFrequency
@@ -161,6 +164,9 @@ function mean(array){
 function variance(array){
     let m = mean(array)
     return mean(array.map(x => (x - m) * (x - m)))
+}
+function standardDeviation(array){
+    return Math.sqrt(variance(array))
 }
 /* function CVdata(maxN, ensembleSize, options){
 
@@ -249,6 +255,8 @@ onmessage = (e) => {
     e.data.clist = JSON.parse(e.data.clist)
     r = new Random(e.data.randomSeed)
     e.data.singletraces = tracetable(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep, e.data.singlechannelNoise)
+    e.data.meantrace = meancurrent2(e.data.singletraces, e.data.n)
+    e.data.stderror = standardDeviation(e.data.meantrace) / Math.sqrt(e.data.n)
     e.data.CVdata = CVdata(e.data.n, e.data.ensembleSize, 5, e.data)
     postMessage(e.data)
   }

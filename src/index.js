@@ -1,4 +1,7 @@
 import Chart from 'chart.js/auto'
+import zoomPlugin from 'chartjs-plugin-zoom'
+import PolynomialRegression from "js-polynomial-regression"
+Chart.register(zoomPlugin);
 
 function qMatrix(height) {
   return {
@@ -21,7 +24,8 @@ function drawTrace(data, elementID, timeStep, title, metadata){
             label: "Current",
             data: data,
             pointRadius: 0,
-            borderColor: 'rgb(255, 99, 132)',
+            borderWidth: 1,
+            borderColor: 'rgb(125, 99, 233)',
           }
         ]
       },
@@ -33,14 +37,7 @@ function drawTrace(data, elementID, timeStep, title, metadata){
             },
             legend: {
                 display: false
-            },
-            subtitle: {
-              display: true,
-              text: `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`,
-              padding: {
-                bottom: 20
-              }
-          },
+            }
         },
         scales: {
           y: {
@@ -60,6 +57,21 @@ function drawTrace(data, elementID, timeStep, title, metadata){
     }
   )
 }
+const zoomOptions = {
+  pan: {
+    enabled: true,
+    mode: 'y'
+  },
+  zoom: {
+    mode: 'y',
+    wheel: {
+      enabled: true,
+    },
+    pinch: {
+      enabled: true
+    },
+  }
+};
 function traceDataTransform(data, index){
   const colors = [
     'rgb(255, 99, 132)',
@@ -72,14 +84,11 @@ function traceDataTransform(data, index){
     label: "Current",
     data: data.map(x => x + (index* 1.5) + 1),
     pointRadius: 0,
-    borderColor: colors[index],
+    borderColor: colors[index % colors.length],
     borderWidth: 1,
   }
 }
 function drawTraces(data, elementID, timeStep, title, metadata){
-  //console.log([...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1)))
-  //console.log(data.map(traceDataTransform))
-  data = data.slice(0, 5)
   return new Chart(
     document.getElementById(elementID),
     {
@@ -98,13 +107,7 @@ function drawTraces(data, elementID, timeStep, title, metadata){
             legend: {
                 display: false
             },
-            subtitle: {
-              display: true,
-              text: `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`,
-              padding: {
-                bottom: 20
-              }
-          },
+            zoom: zoomOptions,
         },
         scales: {
           y: {
@@ -170,14 +173,7 @@ function drawScatter(elementID, dataset, model, title, metadata, modelVisibility
             },
             legend: {
                 display: false
-            },
-            subtitle: {
-              display: true,
-              text: `ensemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`,
-              padding: {
-                bottom: 20
-              }
-          },
+            }
         },
         scales: {
           y: {
@@ -202,23 +198,23 @@ function updateScatter(chart, data, model, metadata, modelVisibility){
   chart.data.datasets[1].data = modelPlotTransform(data, model)
   chart.data.datasets[1].borderWidth = modelVisibility ? 2 : 0
   console.log(chart.data.datasets[1].data)
-  chart.options.plugins.subtitle.text = `ensemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
+  //chart.options.plugins.subtitle.text = `ensemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
 function updateTrace(chart, data, timeStep, metadata){
   chart.data.datasets[0].data = data
   chart.data.labels = [...Array(data.length).keys()].map(x => (x * timeStep).toFixed(1))
-  chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
+  //chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
 function updateTraces(chart, data, timeStep, metadata){
-  data = data.slice(0, 5)
+  //data = data.slice(0, 5)
   chart.data.datasets = data.map(traceDataTransform)
   chart.data.labels = [...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1))
-  chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
+  //chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
-import PolynomialRegression from "js-polynomial-regression"
+
 function CVfit(data){
   const model = PolynomialRegression.read(data.map(({x, y}) => ({x: parseFloat(x), y: parseFloat(y)})), 2)
   return model
@@ -251,17 +247,22 @@ function defaultMetadata(){
 function defaultWatch(){
   return {
     n: "updateGraphs",
+    nNum: "updateGraphs",
     ensembleSize: "updateGraphs",
+    ensembleSizeNum: "updateGraphs",
     samplingFrequency:  "updateGraphs",
     cutoffFrequency: "updateGraphs",
     duration: "updateGraphs",
+    durationNum: "updateGraphs",
     u: "updateGraphs",
     maxTime: "updateGraphs",
-    height: "updateGraphs", //TODO
+    maxTimeNum: "updateGraphs",
+    height: "updateGraphs",
     clist: "updateGraphs",
     initalState: "updateGraphs",
     timeStep: "updateGraphs",
     singlechannelNoise: "updateGraphs",
+    singlechannelNoiseNum: "updateGraphs",
     modelVisibility: "updateGraphs",
     randomSeed: "updateGraphs",
   }
@@ -284,35 +285,55 @@ function getMessage(metadata){
     randomSeed: metadata.randomSeed,
   }
 }
+function modelToString(){
+  let terms = window.CVmodel.getTerms().map((x) => x.toFixed(4))
+  let modelString = `Model Equation: <br> $$y = ${terms[2]}x^2 + ${terms[1]}x + ${terms[0]}$$`
+  return modelString
+}
+function updateModelParams(update){
+  if (update) {
+    document.getElementById("modelParams").innerHTML = modelToString()
+  }
+  else {
+    document.getElementById("modelParams").innerHTML = ""
+  }
+}
 function defaultMethods(){
-  
   return {
     drawGraphs() {
       worker.postMessage(getMessage(this))
       worker.onmessage = (e) => {
-        //window.meangraph = drawTrace(e.data.meancurrent, "meancurrent", e.data.timeStep, "Mean Current", e.data)
-        
-        window.singletraceGraph = drawTraces(e.data.singletraces, "singletraces", e.data.timeStep, "Sample Single Trace Recordings", e.data)
+        window.singletraceGraph = drawTraces(e.data.singletraces, "singletraces", e.data.timeStep, "Single Trace Sweeps", e.data)
+        window.meantraceGraph = drawTrace(e.data.meantrace, "meantrace", e.data.timeStep, "Mean Trace", e.data)
         window.CVmodel = CVfit(e.data.CVdata)
         window.CVgraph = drawScatter("CV", e.data.CVdata, window.CVmodel, "Variance Vs. Mean", e.data, this.modelVisibility)
+        document.getElementById("stderr").innerHTML = "\\(" + e.data.stderror.toFixed(4) + "\\)"
+        updateModelParams(this.modelVisibility)
+        MathJax.typeset()
       }
     },
     updateGraphs() {
       worker.postMessage(getMessage(this))
       worker.onmessage = (e) => {
-        //updateTrace(window.meangraph, e.data.meancurrent, e.data.timeStep, e.data)
         window.CVmodel = CVfit(e.data.CVdata)
         updateTraces(window.singletraceGraph, e.data.singletraces, e.data.timeStep, e.data)
+        updateTrace(window.meantraceGraph, e.data.meantrace, e.data.timeStep, e.data)
         updateScatter(window.CVgraph, e.data.CVdata, window.CVmodel, e.data, this.modelVisibility)
+        updateModelParams(this.modelVisibility)
+        document.getElementById("stderr").innerHTML = "\\(" + e.data.stderror.toFixed(4) + "\\)"
+        MathJax.typeset()
       }
     }
   }
 }
 function setSliderCallbacks(metadata){
-  let sliders = document.querySelectorAll("input[type='range']")
+  let sliders = document.querySelectorAll("input[type='range'], input[type='number']")
   sliders.forEach((slider) => {
     slider.addEventListener("input", (event) => {
       let id = event.target.id
+      if (id.endsWith("Num")) {
+        id = id.slice(0, -3)
+      }
       let value = parseFloat(event.target.value)
       metadata[id] = value
     })
@@ -354,40 +375,3 @@ createApp({
     }
   }
 }).mount('#vueApp')
-//(async function() {
-//  slider = document.getElementById("nRange");
-//  slider.oninput = function() {
-//    output.innerHTML = this.value;
-//  }
-//})()
-
-//(async function() {
-//  let height = 0.001;
-//  let duration = 1;
-//  let u = 0.07;
-//  let tmax = 10;
-//  let tstep = 0.2;
-//  
-//  let qflatpulse = qMatrix(height)
-//  let qPause = qMatrix(0)
-//  let clist = {
-//    "C1": 0,
-//    "C2": 0,
-//    "C3": 0,
-//    "O": 8
-//  }
-//  let initalState = "C1";
-//  let n = 200
-//  let s = meancurrent(qflatpulse, qPause, clist, initalState, duration, n, u, tmax, tstep)
-//  let ensembleSize = 100
-//  let samplingFrequency = 40
-//  let cutoffFrequency = 3
-//
-//  let filtertestData = filtertest(ensembleSize, qflatpulse, qPause, clist, initalState, duration, u, tmax, samplingFrequency, cutoffFrequency)
-//  drawTrace(filtertestData.filteredCurrent, "filtered", filtertestData.timeStep, "Filtered Mean Currents")
-//  drawTrace(filtertestData.unfilteredCurrent, "unfiltered", filtertestData.timeStep, "Unfiltered Mean Currents")
-//  let singletraceData = singletrace(qflatpulse, qPause, clist, initalState, duration, u, tmax, tstep)
-//  drawTrace(singletraceData, "singletrace", tstep, "Single Trace Current")
-//  let meancurrentData = meancurrent(qflatpulse, qPause, clist, initalState, duration, n, u, tmax, tstep)
-//  drawTrace(meancurrentData, "meancurrent", tstep, "Mean Current")
-//})()
