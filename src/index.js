@@ -2,6 +2,7 @@ import Chart from 'chart.js/auto'
 import zoomPlugin from 'chartjs-plugin-zoom'
 Chart.register(zoomPlugin);
 
+zoomMax = 0
 function qMatrix(height) {
   return {
     "C1": {"C1": -100000.0*height, "C2": 100000.0*height, "C3": 0, "O": 0},

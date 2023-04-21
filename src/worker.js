@@ -70,7 +70,7 @@ function generateNoise(noise){
     if (num > 1 || num < 0) return randn_bm() // resample between 0 and 1
     return num
   }
-    return (randn_bm() - 0.5) * 4 * noise;
+    return (randn_bm() - 0.5) * 2 * noise;
 }
 function singletrace(qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, timeStep, noise){
     let timeIncrement = 0
