@@ -30,7 +30,6 @@ class Random {
     }
   }
 
-  
 function range(start, end){
     const length = end - start;
     return Array.from({ length }, (_, i) => start + i);
@@ -60,8 +59,18 @@ function dot(a, b){
     let t2 = t1.reduce((a, b) => a + b)
     return t2;
 }
+
 function generateNoise(noise){
-    return ((r.random() - 0.5) * 2) * noise;
+  function randn_bm() {
+    let u = 0, v = 0;
+    while(u === 0) u = r.random(); //Converting [0,1) to (0,1)
+    while(v === 0) v = r.random();
+    let num = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+    num = num / 10.0 + 0.5; // Translate to 0 -> 1
+    if (num > 1 || num < 0) return randn_bm() // resample between 0 and 1
+    return num
+  }
+    return (randn_bm() - 0.5) * 4 * noise;
 }
 function singletrace(qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, timeStep, noise){
     let timeIncrement = 0
@@ -137,8 +146,8 @@ function meancurrent(qflatpulse, qflatpause, conductivityList, initalState, dura
     let tracetableResult = tracetable(qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, timeStep)
     return tracetableResult.reduce((a, b) => addvector(a, b)).map(x => x / n)
 }
-function meancurrent2(traces, n) {
-  return traces.reduce((a, b) => addvector(a, b)).map(x => x / n)
+function sumcurrent(traces, n) {
+  return traces.reduce((a, b) => addvector(a, b))//.map(x => x / n)
 }
 function filtertest(ensembleSize, qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, samplingFrequency, cutoffFrequency){
     let timeStep = 1 / samplingFrequency
@@ -223,38 +232,37 @@ function standardDeviation(array){
 
 function CVdata(maxN, ensembleSize, windowSize, options){
     function aux(n, options) {
-        return tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise)
+      return range(0, n).map(() => sumcurrent(tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, options.n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise), options.n))
+        //return tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise)
     }
     
     let resultData = []
     //ensembleSize = 1
 
-    for (let ensemble = 0; ensemble < ensembleSize; ensemble++){
-        let currents = aux(maxN, options)
-        for (let i = 0; i < currents[0].length; i++){
-            let current = []
-            for (let j = 0; j < currents.length; j++){
-                current.push(mean(currents[j].slice(i, i+windowSize)))
-            }
-            let meanCurrent = mean(current)
-            let varianceCurrent = variance(current)
-            resultData[meanCurrent] = varianceCurrent
-            //if (resultData[meanCurrent] === undefined){
-            //    resultData[meanCurrent] = varianceCurrent
-            //} else {
-            //    const value = resultData[meanCurrent]
-            //    resultData[meanCurrent] = (value + varianceCurrent) / 2
-            //}
-        }
+    let currents = aux(ensembleSize, options)
+    for (let i = 0; i < currents[0].length; i++){
+      let current = []
+      for (let j = 0; j < currents.length; j++){
+          current.push(currents[j][i])
+      }
+      let meanCurrent = mean(current)
+      let varianceCurrent = variance(current)
+      resultData[meanCurrent] = varianceCurrent
+      //if (resultData[meanCurrent] === undefined){
+      //    resultData[meanCurrent] = varianceCurrent
+      //} else {
+      //    const value = resultData[meanCurrent]
+      //    resultData[meanCurrent] = (value + varianceCurrent) / 2
+      //}
     }
-    return Object.keys(resultData).map(x => ({x: x, y: resultData[x]}))
+    return Object.keys(resultData).map(x => ({x: parseFloat(x), y: resultData[x]}))
 }
 
 onmessage = (e) => {
-    e.data.clist = JSON.parse(e.data.clist)
+    //e.data.clist = JSON.parse(e.data.clist)
     r = new Random(e.data.randomSeed)
     e.data.singletraces = tracetable(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep, e.data.singlechannelNoise)
-    e.data.meantrace = meancurrent2(e.data.singletraces, e.data.n)
+    e.data.meantrace = sumcurrent(e.data.singletraces, e.data.n)
     e.data.stderror = standardDeviation(e.data.meantrace) / Math.sqrt(e.data.n)
     e.data.CVdata = CVdata(e.data.n, e.data.ensembleSize, 1, e.data)
     postMessage(e.data)
