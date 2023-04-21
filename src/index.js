@@ -11,25 +11,46 @@ function qMatrix(height) {
     "O": {"C1": 0, "C2": 0.5, "C3": 0.0, "O": -0.5},
   }
 }
-
+function transformMeanData(data){
+  let transformedData = data.map((x, i) => ({x: i * globalTimeStep, y: x}))
+  //let newData = []
+  //newData.push(transformedData[0])
+  console.log(transformedData)
+  for (let i = 1; i < data.length - 1; i++){
+    if (data[i] == data[i - 1] && data[i] == data[i + 1]){
+      //newData.push(transformedData[i])
+      transformedData[i].y = null
+    }
+  }
+  //newData.push(transformedData[transformedData.length - 1])
+  return transformedData.filter(x => x.y != null)
+}
 function drawTrace(data, elementID, timeStep, title, metadata){
+  globalTimeStep = timeStep
+  let newData = transformMeanData(data)
+  console.log(newData)
   return new Chart(
     document.getElementById(elementID),
     {
       type: 'line',
       data: {
-        labels: [...Array(data.length).keys()].map(x => (x * timeStep).toFixed(1)),
+        //labels: [...Array(data.length).keys()].map(x => (x * timeStep).toFixed(1)),
         datasets: [
           {
+            type: 'line',
             label: "Current",
-            data: data,
+            data: newData,
             pointRadius: 0,
             borderWidth: 1,
             borderColor: 'rgb(125, 99, 233)',
+            indexAxis: 'x'
           }
         ]
       },
       options: {
+        cubicInterpolationMode: 'monotone',
+        animation: false,
+        parsing: false,
         plugins: {
             title: {
                 display: true,
@@ -37,7 +58,13 @@ function drawTrace(data, elementID, timeStep, title, metadata){
             },
             legend: {
                 display: false
-            }
+            },
+            //decimation: {
+            //  enabled: true,
+            //  algorithm: 'lttb',
+            //  samples: 50,
+            //  threshold: 1,
+            //},
         },
         scales: {
           y: {
@@ -47,6 +74,8 @@ function drawTrace(data, elementID, timeStep, title, metadata){
             }
           },
           x: {
+            type: 'linear',
+            max: metadata.maxTime,
             title: {
               display: true,
               text: 'Time (ms)'
@@ -57,21 +86,26 @@ function drawTrace(data, elementID, timeStep, title, metadata){
     }
   )
 }
-const zoomOptions = {
-  pan: {
-    enabled: true,
-    mode: 'y'
-  },
-  zoom: {
-    mode: 'y',
-    wheel: {
+function zoomOptions(){
+  return {
+    pan: {
       enabled: true,
+      mode: 'y'
     },
-    pinch: {
-      enabled: true
+    limits: {
+      y: {min:0, max: zoomMax, minRange: 2.1}
     },
+    zoom: {
+      mode: 'y',
+      wheel: {
+        enabled: true,
+      },
+      pinch: {
+        enabled: true
+      },
+    }
   }
-};
+}
 function traceDataTransform(data, index){
   const colors = [
     'rgb(255, 99, 132)',
@@ -82,22 +116,28 @@ function traceDataTransform(data, index){
   ]
   return {
     label: "Current",
-    data: data.map(x => x + (index* 1.5) + 1),
+    type: 'line',
+    data: data.map((x, i) => ({x: i * globalTimeStep, y: x + (index* 1.5) + 1})),
+    //data: data.map(x => x),
     pointRadius: 0,
     borderColor: colors[index % colors.length],
-    borderWidth: 1,
+    borderWidth: 1
+    //yAxisID: `y${index}`,
   }
 }
 function drawTraces(data, elementID, timeStep, title, metadata){
+  zoomMax = data.length * 1.5
+  globalTimeStep = timeStep
   return new Chart(
     document.getElementById(elementID),
     {
       type: 'line',
       data: {
-        labels: [...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1)),
+        //labels: [...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1)),
         datasets: data.map(traceDataTransform)
       },
       options: {
+        animation: false,
         events: [],
         plugins: {
             title: {
@@ -107,18 +147,51 @@ function drawTraces(data, elementID, timeStep, title, metadata){
             legend: {
                 display: false
             },
-            zoom: zoomOptions,
+            zoom: zoomOptions(),
         },
         scales: {
           y: {
-            display: false,
+            display: true,
             min: 0,
+            max: zoomMax,
+            position: 'left',
             title: {
               display: true,
               text: 'Current (pA)'
+            },
+            ticks: {
+              stepSize: 0.5,
+              callback: function(value, index, ticks) {
+                if (value % 1.5 > 1) {
+                  return ""
+                }
+                return `${((value % 1.5) - 1).toFixed(2)}`
+              }
             }
+            //stacked: true,
           },
+          //y2: {
+          //  display: true,
+          //  min: 0,
+          //  ticks: {
+          //    display: false,
+          //    stepsSize: 1.5,
+          //    //callback: function(value, index, ticks) {
+          //    //  if (value % 1.5 == 0) {
+          //    //    return " "
+          //    //  }
+          //    //  return ""
+          //    //}
+          //  },
+          //  grid : {
+          //    lineWidth: 2,
+          //    color: 'rgba(0, 0, 0, 0.5)',
+          //  },
+          //  position: 'right'
+          //},
           x: {
+            type: 'linear',
+            max: metadata.maxTime,
             title: {
               display: true,
               text: 'Time (ms)'
@@ -166,6 +239,7 @@ function drawScatter(elementID, dataset, model, title, metadata, modelVisibility
         }
       },
       options: {
+        animation: false,
         plugins: {
             title: {
                 display: true,
@@ -202,15 +276,21 @@ function updateScatter(chart, data, model, metadata, modelVisibility){
   chart.update()
 }
 function updateTrace(chart, data, timeStep, metadata){
-  chart.data.datasets[0].data = data
-  chart.data.labels = [...Array(data.length).keys()].map(x => (x * timeStep).toFixed(1))
+  globalTimeStep = timeStep
+  chart.data.datasets[0].data = transformMeanData(data)
+  chart.options.scales.x.max = metadata.maxTime
   //chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
 function updateTraces(chart, data, timeStep, metadata){
   //data = data.slice(0, 5)
+  globalTimeStep = timeStep
+  zoomMax = data.length * 1.5
+  chart.options.plugins.zoom = zoomOptions()
+  chart.options.scales.y.max = zoomMax
   chart.data.datasets = data.map(traceDataTransform)
-  chart.data.labels = [...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1))
+  chart.options.scales.x.max = metadata.maxTime
+  //chart.data.labels = [...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1))
   //chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
@@ -238,7 +318,7 @@ function defaultMetadata(){
       "O": 8
     },
     initalState: "C1",
-    timeStep: 0.02,
+    timeStep: 0.01,
     singlechannelNoise: false,
     modelVisibility: false,
     randomSeed: 0,
@@ -304,6 +384,7 @@ function defaultMethods(){
       worker.postMessage(getMessage(this))
       worker.onmessage = (e) => {
         window.singletraceGraph = drawTraces(e.data.singletraces, "singletraces", e.data.timeStep, "Single Trace Sweeps", e.data)
+        //window.singletraceGraph = drawTrace(e.data.singletraces[0], "singletraces", e.data.timeStep, "Single Trace Sweeps", e.data)
         window.meantraceGraph = drawTrace(e.data.meantrace, "meantrace", e.data.timeStep, "Mean Trace", e.data)
         window.CVmodel = CVfit(e.data.CVdata)
         window.CVgraph = drawScatter("CV", e.data.CVdata, window.CVmodel, "Variance Vs. Mean", e.data, this.modelVisibility)

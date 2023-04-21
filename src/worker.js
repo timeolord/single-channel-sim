@@ -61,7 +61,7 @@ function dot(a, b){
     return t2;
 }
 function generateNoise(noise){
-    return r.random() * noise;
+    return ((r.random() - 0.5) * 2) * noise;
 }
 function singletrace(qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, timeStep, noise){
     let timeIncrement = 0
@@ -222,13 +222,12 @@ function standardDeviation(array){
 } */
 
 function CVdata(maxN, ensembleSize, windowSize, options){
-    const decimals = 3
-
     function aux(n, options) {
         return tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise)
     }
     
     let resultData = []
+    //ensembleSize = 1
 
     for (let ensemble = 0; ensemble < ensembleSize; ensemble++){
         let currents = aux(maxN, options)
@@ -239,17 +238,17 @@ function CVdata(maxN, ensembleSize, windowSize, options){
             }
             let meanCurrent = mean(current)
             let varianceCurrent = variance(current)
-            if (resultData[meanCurrent.toFixed(decimals)] === undefined){
-                resultData[meanCurrent.toFixed(decimals)] = varianceCurrent
-            } else {
-                const value = resultData[meanCurrent.toFixed(decimals)]
-                resultData[meanCurrent.toFixed(decimals)] = (value + varianceCurrent) / 2
-            }
+            resultData[meanCurrent] = varianceCurrent
+            //if (resultData[meanCurrent] === undefined){
+            //    resultData[meanCurrent] = varianceCurrent
+            //} else {
+            //    const value = resultData[meanCurrent]
+            //    resultData[meanCurrent] = (value + varianceCurrent) / 2
+            //}
         }
     }
     return Object.keys(resultData).map(x => ({x: x, y: resultData[x]}))
 }
-
 
 onmessage = (e) => {
     e.data.clist = JSON.parse(e.data.clist)
@@ -257,7 +256,7 @@ onmessage = (e) => {
     e.data.singletraces = tracetable(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep, e.data.singlechannelNoise)
     e.data.meantrace = meancurrent2(e.data.singletraces, e.data.n)
     e.data.stderror = standardDeviation(e.data.meantrace) / Math.sqrt(e.data.n)
-    e.data.CVdata = CVdata(e.data.n, e.data.ensembleSize, 5, e.data)
+    e.data.CVdata = CVdata(e.data.n, e.data.ensembleSize, 1, e.data)
     postMessage(e.data)
   }
   
