@@ -3,6 +3,7 @@ import zoomPlugin from 'chartjs-plugin-zoom'
 Chart.register(zoomPlugin);
 
 var zoomMax = 0
+var globalTimeStep = 0
 function qMatrix(height) {
   return {
     "C1": {"C1": -100000.0*height, "C2": 100000.0*height, "C3": 0, "O": 0},
