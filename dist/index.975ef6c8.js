@@ -538,7 +538,8 @@ var _autoDefault = parcelHelpers.interopDefault(_auto);
 var _chartjsPluginZoom = require("chartjs-plugin-zoom");
 var _chartjsPluginZoomDefault = parcelHelpers.interopDefault(_chartjsPluginZoom);
 (0, _autoDefault.default).register((0, _chartjsPluginZoomDefault.default));
-zoomMax = 0;
+var zoomMax = 0;
+var globalTimeStep = 0;
 function qMatrix(height) {
     return {
         "C1": {
