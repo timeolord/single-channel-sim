@@ -247,6 +247,8 @@ function CVdata(maxN, ensembleSize, windowSize, options){
       }
       let meanCurrent = mean(current)
       let varianceCurrent = variance(current)
+      variances.push({x: i, y: varianceCurrent})
+      means.push({x: i, y: meanCurrent})
       resultData[meanCurrent] = varianceCurrent
       //if (resultData[meanCurrent] === undefined){
       //    resultData[meanCurrent] = varianceCurrent
@@ -259,12 +261,16 @@ function CVdata(maxN, ensembleSize, windowSize, options){
 }
 
 onmessage = (e) => {
-    //e.data.clist = JSON.parse(e.data.clist)
-    r = new Random(e.data.randomSeed)
-    e.data.singletraces = tracetable(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep, e.data.singlechannelNoise)
-    e.data.meantrace = sumcurrent(e.data.singletraces, e.data.n)
-    e.data.stderror = standardDeviation(e.data.meantrace) / Math.sqrt(e.data.n)
-    e.data.CVdata = CVdata(e.data.n, e.data.ensembleSize, 1, e.data)
-    postMessage(e.data)
+  variances = []
+  means = []
+  //e.data.clist = JSON.parse(e.data.clist)
+  r = new Random(e.data.randomSeed)
+  e.data.singletraces = tracetable(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep, e.data.singlechannelNoise)
+  e.data.meantrace = sumcurrent(e.data.singletraces, e.data.n)
+  e.data.stderror = standardDeviation(e.data.meantrace) / Math.sqrt(e.data.n)
+  e.data.CVdata = CVdata(e.data.n, e.data.ensembleSize, 1, e.data)
+  e.data.variances = variances
+  e.data.means = means
+  postMessage(e.data)
   }
   

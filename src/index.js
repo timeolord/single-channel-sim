@@ -14,37 +14,46 @@ function qMatrix(height) {
 }
 function transformMeanData(data){
   let transformedData = data.map((x, i) => ({x: i * globalTimeStep, y: x}))
-  //let newData = []
-  //newData.push(transformedData[0])
-  //console.log(transformedData)
   for (let i = 1; i < data.length - 1; i++){
     if (data[i] == data[i - 1] && data[i] == data[i + 1]){
-      //newData.push(transformedData[i])
       transformedData[i].y = null
     }
   }
-  //newData.push(transformedData[transformedData.length - 1])
   return transformedData.filter(x => x.y != null)
 }
-function drawTrace(data, elementID, timeStep, title, metadata){
+function drawTrace(data, elementID, timeStep, title, metadata, alvarez, meansData){
   globalTimeStep = timeStep
-  let newData = transformMeanData(data)
-  //console.log(newData)
+  let newData = []
+  if (!alvarez){
+    newData = transformMeanData(data)
+  }
+  else {
+    newData = data.map(x => ({x: x.x * globalTimeStep, y: x.y}))
+  }
   return new Chart(
     document.getElementById(elementID),
     {
       type: 'line',
       data: {
-        //labels: [...Array(data.length).keys()].map(x => (x * timeStep).toFixed(1)),
         datasets: [
           {
             type: 'line',
-            label: "Current",
+            label: !alvarez ? "Current" : "Variance",
             data: newData,
             pointRadius: 0,
             borderWidth: 1,
-            borderColor: 'rgb(125, 99, 233)',
+            borderColor: !alvarez ? 'rgb(125, 99, 233)' : 'rgb(212, 12, 211)',
             indexAxis: 'x'
+          },
+          {
+            type: 'line',
+            label: "Mean",
+            data: !alvarez ? [] : meansData.map(x => ({x: x.x * globalTimeStep, y: x.y})),
+            pointRadius: 0,
+            borderWidth: 1,
+            borderColor: 'rgb(255, 99, 132)',
+            indexAxis: 'x',
+            yAxisID: 'y2',
           }
         ]
       },
@@ -58,26 +67,28 @@ function drawTrace(data, elementID, timeStep, title, metadata){
                 text: title
             },
             legend: {
-                display: false
+                display: alvarez ? true : false
             },
-            //decimation: {
-            //  enabled: true,
-            //  algorithm: 'lttb',
-            //  samples: 50,
-            //  threshold: 1,
-            //},
         },
         scales: {
           y: {
             title: {
               display: true,
-              text: 'Current (pA)'
+              text: !alvarez ? 'Current (pA)' : 'Variance (pA^2)'
             },
             ticks: {
               callback: function(value, index, ticks) {
                 return `${value.toFixed(2)}`
               }
             }
+          },
+          y2: {
+            display: alvarez ? true : false,
+            title: {
+              display: alvarez ? true : false,
+              text: 'Mean (pA)'
+            },
+            position: 'right',
           },
           x: {
             type: 'linear',
@@ -124,11 +135,9 @@ function traceDataTransform(data, index){
     label: "Current",
     type: 'line',
     data: data.map((x, i) => ({x: i * globalTimeStep, y: x + (index* 1.5) + 1})),
-    //data: data.map(x => x),
     pointRadius: 0,
     borderColor: colors[index % colors.length],
     borderWidth: 1
-    //yAxisID: `y${index}`,
   }
 }
 function drawTraces(data, elementID, timeStep, title, metadata){
@@ -139,7 +148,6 @@ function drawTraces(data, elementID, timeStep, title, metadata){
     {
       type: 'line',
       data: {
-        //labels: [...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1)),
         datasets: data.map(traceDataTransform)
       },
       options: {
@@ -174,27 +182,7 @@ function drawTraces(data, elementID, timeStep, title, metadata){
                 return `${((value % 1.5) - 1).toFixed(2)}`
               }
             }
-            //stacked: true,
           },
-          //y2: {
-          //  display: true,
-          //  min: 0,
-          //  ticks: {
-          //    display: false,
-          //    stepsSize: 1.5,
-          //    //callback: function(value, index, ticks) {
-          //    //  if (value % 1.5 == 0) {
-          //    //    return " "
-          //    //  }
-          //    //  return ""
-          //    //}
-          //  },
-          //  grid : {
-          //    lineWidth: 2,
-          //    color: 'rgba(0, 0, 0, 0.5)',
-          //  },
-          //  position: 'right'
-          //},
           x: {
             type: 'linear',
             max: metadata.maxTime,
@@ -210,7 +198,6 @@ function drawTraces(data, elementID, timeStep, title, metadata){
 }
 function modelPlotTransform(data, metadata){
   let resultData = []
-  console.log(data)
   for (let i = 0; i < data.length; i++){
     let modelValue = (metadata.modelSingleCurrent * data[i].x) - ((1/metadata.modelChannelAmount) * (data[i].x  * data[i].x))
     resultData.push({x: data[i].x, y: modelValue})
@@ -240,7 +227,6 @@ function drawScatter(elementID, dataset, model, title, metadata, modelVisibility
   return new Chart(
     document.getElementById(elementID),
     {
-      //type: 'scatter',
       data: data,
       options: {
         scales: {
@@ -284,27 +270,22 @@ function updateScatter(chart, data, model, metadata, modelVisibility){
   chart.data.datasets[0].data = data
   chart.data.datasets[1].data = modelPlotTransform(data, metadata)
   chart.data.datasets[1].borderWidth = modelVisibility ? 2 : 0
-  //console.log(chart.data.datasets[1].data)
-  //chart.options.plugins.subtitle.text = `ensemble size = ${metadata.ensembleSize}, n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
-function updateTrace(chart, data, timeStep, metadata){
+function updateTrace(chart, data, timeStep, metadata, alvarez, meanData){
   globalTimeStep = timeStep
-  chart.data.datasets[0].data = transformMeanData(data)
+  chart.data.datasets[0].data = !alvarez ? transformMeanData(data) : data.map(x => ({x: x.x * globalTimeStep, y: x.y}))
+  chart.data.datasets[1].data = alvarez ? meanData.map(x => ({x: x.x * globalTimeStep, y: x.y})) : []
   chart.options.scales.x.max = metadata.maxTime
-  //chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
 function updateTraces(chart, data, timeStep, metadata){
-  //data = data.slice(0, 5)
   globalTimeStep = timeStep
   zoomMax = data.length * 1.5
   chart.options.plugins.zoom = zoomOptions()
   chart.options.scales.y.max = zoomMax
   chart.data.datasets = data.map(traceDataTransform)
   chart.options.scales.x.max = metadata.maxTime
-  //chart.data.labels = [...Array(data[0].length).keys()].map(x => (x * timeStep).toFixed(1))
-  //chart.options.plugins.subtitle.text = `n = ${metadata.n}, duration = ${metadata.duration} ms, u = ${metadata.u}, max time = ${metadata.maxTime} ms`
   chart.update()
 }
 
@@ -388,13 +369,21 @@ function getMessage(metadata){
   }
 }
 function modelToString(metadata){
-  let modelString = `Model Equation: <br> $$\\sigma^2 = ${metadata.modelSingleCurrent}I - \\frac{1}{${metadata.modelChannelAmount}}I^2$$`
+  let modelString = `Model Equation: <br> $$\\sigma^2 = ${metadata.modelSingleCurrent.toFixed(2)}I - \\frac{1}{${metadata.modelChannelAmount}}I^2$$`
   return modelString
 }
-function updateModelParams(update){
+function estimateSlope(metadata){
+  metadata.CVdata.toSorted((a, b) => b.x - a.x)
+  let index = Math.floor(metadata.CVdata.length * 0.9)
+  let result = metadata.CVdata[index].y / metadata.CVdata[index].x
+  return result
+}
+function updateModelParams(update, metadata){
+  metadata.modelChannelAmount = metadata.n
+  metadata.modelSingleCurrent = estimateSlope(metadata)
   if (update) {
-    document.getElementById("modelSingleCurrentDiv").style = "display: flex"
-    document.getElementById("modelChannelAmountDiv").style = "display: flex"
+    document.getElementById("modelSingleCurrentDiv").style = "display: none"
+    document.getElementById("modelChannelAmountDiv").style = "display: none"
     document.getElementById("modelParamsDiv").style = "display: flex"
   }
   else {
@@ -409,12 +398,11 @@ function defaultMethods(){
       worker.postMessage(getMessage(this))
       worker.onmessage = (e) => {
         window.singletraceGraph = drawTraces(e.data.singletraces, "singletraces", e.data.timeStep, "Single Trace Sweeps", e.data)
-        //window.singletraceGraph = drawTrace(e.data.singletraces[0], "singletraces", e.data.timeStep, "Single Trace Sweeps", e.data)
-        window.meantraceGraph = drawTrace(e.data.meantrace, "meantrace", e.data.timeStep, "Sum Trace", e.data)
-        //window.CVmodel = CVfit(e.data.CVdata)
+        window.meantraceGraph = drawTrace(e.data.meantrace, "meantrace", e.data.timeStep, "Sum Trace", e.data, false)
+        window.alvarezChart = drawTrace(e.data.variances, "alvarez", e.data.timeStep, "Variance and Mean Current Vs. Time", e.data, true, e.data.means)
+        updateModelParams(this.modelVisibility, e.data)
         window.CVgraph = drawScatter("CV", e.data.CVdata, window.CVmodel, "Variance Vs. Mean", e.data, this.modelVisibility)
         document.getElementById("stderr").innerHTML = "\\(" + e.data.stderror.toFixed(4) + "\\)"
-        updateModelParams(this.modelVisibility)
         document.getElementById("modelParams").innerHTML = modelToString(e.data)
         MathJax.typeset()
       }
@@ -422,11 +410,11 @@ function defaultMethods(){
     updateGraphs() {
       worker.postMessage(getMessage(this))
       worker.onmessage = (e) => {
-        //window.CVmodel = CVfit(e.data.CVdata)
         updateTraces(window.singletraceGraph, e.data.singletraces, e.data.timeStep, e.data)
-        updateTrace(window.meantraceGraph, e.data.meantrace, e.data.timeStep, e.data)
+        updateTrace(window.meantraceGraph, e.data.meantrace, e.data.timeStep, e.data, false, e.data.means)
+        updateTrace(window.alvarezChart, e.data.variances, e.data.timeStep, e.data, true, e.data.means)
+        updateModelParams(this.modelVisibility, e.data)
         updateScatter(window.CVgraph, e.data.CVdata, window.CVmodel, e.data, this.modelVisibility)
-        updateModelParams(this.modelVisibility)
         document.getElementById("stderr").innerHTML = "\\(" + e.data.stderror.toFixed(4) + "\\)"
         document.getElementById("modelParams").innerHTML = modelToString(e.data)
         MathJax.typeset()
