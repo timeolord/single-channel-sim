@@ -4,6 +4,7 @@ Chart.register(zoomPlugin);
 
 var zoomMax = 0
 var globalTimeStep = 0
+var maxTraceAmp = 0
 function qMatrix(height) {
   return {
     "C1": {"C1": -100000.0*height, "C2": 100000.0*height, "C3": 0, "O": 0},
@@ -80,7 +81,8 @@ function drawTrace(data, elementID, timeStep, title, metadata, alvarez, meansDat
               callback: function(value, index, ticks) {
                 return `${value.toFixed(2)}`
               }
-            }
+            },
+            position: alvarez ? 'right' : 'left',
           },
           y2: {
             display: alvarez ? true : false,
@@ -88,7 +90,7 @@ function drawTrace(data, elementID, timeStep, title, metadata, alvarez, meansDat
               display: alvarez ? true : false,
               text: 'Mean (pA)'
             },
-            position: 'right',
+            position: 'left',
           },
           x: {
             type: 'linear',
@@ -134,14 +136,15 @@ function traceDataTransform(data, index){
   return {
     label: "Current",
     type: 'line',
-    data: data.map((x, i) => ({x: i * globalTimeStep, y: x + (index* 1.5) + 1})),
+    data: data.map((x, i) => ({x: i * globalTimeStep, y: x + (index* maxTraceAmp) + (maxTraceAmp - 0.5)})),
     pointRadius: 0,
     borderColor: colors[index % colors.length],
     borderWidth: 1
   }
 }
 function drawTraces(data, elementID, timeStep, title, metadata){
-  zoomMax = data.length * 1.5
+  maxTraceAmp = Math.ceil(metadata.u * metadata.conductance) + 0.5
+  zoomMax = data.length * maxTraceAmp
   globalTimeStep = timeStep
   return new Chart(
     document.getElementById(elementID),
@@ -174,12 +177,12 @@ function drawTraces(data, elementID, timeStep, title, metadata){
               text: 'Current (pA)'
             },
             ticks: {
-              stepSize: 0.5,
+              stepSize: maxTraceAmp / 3,
               callback: function(value, index, ticks) {
-                if (value % 1.5 > 1) {
+                if (value % maxTraceAmp > maxTraceAmp - 0.5) {
                   return ""
                 }
-                return `${((value % 1.5) - 1).toFixed(2)}`
+                return `${((value % maxTraceAmp) - (maxTraceAmp - 0.5)).toFixed(2)}`
               }
             }
           },
@@ -281,7 +284,8 @@ function updateTrace(chart, data, timeStep, metadata, alvarez, meanData){
 }
 function updateTraces(chart, data, timeStep, metadata){
   globalTimeStep = timeStep
-  zoomMax = data.length * 1.5
+  maxTraceAmp = Math.ceil(metadata.u * metadata.conductance) + 0.5
+  zoomMax = data.length * maxTraceAmp
   chart.options.plugins.zoom = zoomOptions()
   chart.options.scales.y.max = zoomMax
   chart.data.datasets = data.map(traceDataTransform)
@@ -373,7 +377,7 @@ function modelToString(metadata){
   return modelString
 }
 function estimateSlope(metadata){
-  metadata.CVdata.toSorted((a, b) => b.x - a.x)
+  metadata.CVdata.map(x => x).sort((a, b) => b.x - a.x)
   let index = Math.floor(metadata.CVdata.length * 0.9)
   let result = metadata.CVdata[index].y / metadata.CVdata[index].x
   return result

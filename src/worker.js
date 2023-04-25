@@ -61,16 +61,14 @@ function dot(a, b){
 }
 
 function generateNoise(noise){
-  function randn_bm() {
-    let u = 0, v = 0;
-    while(u === 0) u = r.random(); //Converting [0,1) to (0,1)
-    while(v === 0) v = r.random();
-    let num = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-    num = num / 10.0 + 0.5; // Translate to 0 -> 1
-    if (num > 1 || num < 0) return randn_bm() // resample between 0 and 1
-    return num
-  }
-    return (randn_bm() - 0.5) * 2 * noise;
+  function gaussianRandom(mean=0, stdev=1) {
+    let u = 1 - r.random(); // Converting [0,1) to (0,1]
+    let v = r.random();
+    let z = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+    // Transform to the desired mean and standard deviation:
+    return z * stdev + mean;
+    }
+    return gaussianRandom(0, noise);
 }
 function singletrace(qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, timeStep, noise){
     let timeIncrement = 0
