@@ -940,7 +940,7 @@ function modelToString(metadata) {
 }
 function estimateSlope(metadata) {
     metadata.CVdata.map((x)=>x).sort((a, b)=>b.x - a.x);
-    let index = Math.floor(metadata.CVdata.length * 0.9);
+    let index = Math.floor(metadata.CVdata.length * 0.95);
     let result = metadata.CVdata[index].y / metadata.CVdata[index].x;
     return result;
 }
