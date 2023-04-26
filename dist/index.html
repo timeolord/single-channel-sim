@@ -51,18 +51,18 @@ input {
         <div class="flex-container">
           <div class="inside-container">
             <p>\(N\): Number of Single Channels </p>
-            <input type="range" id="n" min="1" max="50" value="20" class="slider" onchange="this.nextElementSibling.value=this.value">
-            <input type="number" id="nNum" min="1" max="50" value="20" onchange="this.previousElementSibling.value=this.value">
+            <input type="range" id="n" min="1" max="100" value="20" class="slider" onchange="this.nextElementSibling.value=this.value">
+            <input type="number" id="nNum" min="1" max="100" value="20" onchange="this.previousElementSibling.value=this.value">
           </div>
           <div class="inside-container">
             <p>\(E - E_{Rev}\): Driving Force (\(V\))</p>
-            <input type="range" id="u" min="0.0" max="0.5" value="0.07" step="0.001" class="slider" onchange="this.nextElementSibling.value=this.value">
-            <input type="number" id="uNum" min="0.0" max="0.5" value="0.07" step="0.001" onchange="this.previousElementSibling.value=this.value">
+            <input type="range" id="u" min="0.001" max="0.5" value="0.07" step="0.001" class="slider" onchange="this.nextElementSibling.value=this.value">
+            <input type="number" id="uNum" min="0.001" max="0.5" value="0.07" step="0.001" onchange="this.previousElementSibling.value=this.value">
           </div>
           <div class="inside-container">
             <p>\(\gamma\): Single Channel Conductance (\(pS\))</p>
-            <input type="range" id="conductance" min="0.0" max="50" value="8.0" step="0.5" class="slider" onchange="this.nextElementSibling.value=this.value">
-            <input type="number" id="conductanceNum" min="0.0" max="50" value="8.0" step="0.5" onchange="this.previousElementSibling.value=this.value">
+            <input type="range" id="conductance" min="0.5" max="50" value="8.0" step="0.5" class="slider" onchange="this.nextElementSibling.value=this.value">
+            <input type="number" id="conductanceNum" min="0.5" max="50" value="8.0" step="0.5" onchange="this.previousElementSibling.value=this.value">
           </div>
           <div class="inside-container">
             <p>Excitation Duration (\(ms\))</p>
@@ -76,8 +76,8 @@ input {
           </div>
           <div class="inside-container">
             <p>Noise Standard Deviation</p>
-            <input type="range" id="singlechannelNoise" min="0" max="1" value="0" step="0.01" class="slider" onchange="this.nextElementSibling.value=this.value">
-            <input type="number" id="singlechannelNoiseNum" min="0" max="1" value="0" step="0.01" onchange="this.previousElementSibling.value=this.value">
+            <input type="range" id="singlechannelNoise" min="0" max="0.25" value="0" step="0.01" class="slider" onchange="this.nextElementSibling.value=this.value">
+            <input type="number" id="singlechannelNoiseNum" min="0" max="0.25" value="0" step="0.01" onchange="this.previousElementSibling.value=this.value">
           </div>
           <div class="inside-container">
             <p>Random Seed</p>
@@ -94,8 +94,8 @@ input {
         <div class="flex-container">
           <div class="inside-container">
             <p>Ensemble Size </p>
-            <input type="range" min="10" max="100" value="10" class="slider" id="ensembleSize" onchange="this.nextElementSibling.value=this.value">
-            <input type="number" min="10" max="100" value="10" class="slider" id="ensembleSizeNum" onchange="this.previousElementSibling.value=this.value">
+            <input type="range" min="10" max="500" value="10" class="slider" id="ensembleSize" onchange="this.nextElementSibling.value=this.value">
+            <input type="number" min="10" max="500" value="10" class="slider" id="ensembleSizeNum" onchange="this.previousElementSibling.value=this.value">
           </div>
           <div class="inside-container">
             <p>Show Model</p>

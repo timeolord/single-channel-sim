@@ -175,68 +175,11 @@ function variance(array){
 function standardDeviation(array){
     return Math.sqrt(variance(array))
 }
-/* function CVdata(maxN, ensembleSize, options){
-
-    function aux(n, options) {
-        return meancurrent(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, n, options.u, options.maxTime, options.timeStep)
-    }
-    function roundAux(i){
-        return JSON.stringify({x: i.x.toPrecision(3), y: i.y.toPrecision(3)})
-    }
-    
-    let resultData = new Set()
-
-    for (let ensemble = 0; ensemble < ensembleSize; ensemble++){
-        let currents = range(5, maxN).map(x => aux(x, options))
-        for (let i = 0; i < currents[0].length; i++){
-            let current = []
-            for (let j = 0; j < currents.length; j++){
-                current.push(currents[j][i])
-            }
-            let meanCurrent = mean(current)
-            let varianceCurrent = variance(current)
-            resultData.add(roundAux({x: meanCurrent, y: varianceCurrent}))
-        }
-    }
-    return resultData
-} */
-
-/* function CVdata(maxN, ensembleSize, windowSize, options){
-
-    function aux(n, options) {
-        return tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise)
-    }
-    function roundAux(i){
-        const decimals = 4
-        return JSON.stringify({x: i.x.toFixed(decimals), y: i.y.toFixed(decimals)})
-    }
-    
-    let resultData = new Set()
-
-    for (let ensemble = 0; ensemble < ensembleSize; ensemble++){
-        let currents = aux(maxN, options)
-        for (let i = 0; i < currents[0].length; i++){
-            let current = []
-            for (let j = 0; j < currents.length; j++){
-                current.push(mean(currents[j].slice(i, i+windowSize)))
-            }
-            let meanCurrent = mean(current)
-            let varianceCurrent = variance(current)
-            resultData.add(roundAux({x: meanCurrent, y: varianceCurrent}))
-        }
-    }
-    return [...resultData].map(x => JSON.parse(x))
-} */
-
 function CVdata(maxN, ensembleSize, windowSize, options){
     function aux(n, options) {
       return range(0, n).map(() => sumcurrent(tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, options.n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise), options.n))
-        //return tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise)
     }
-    
     let resultData = []
-    //ensembleSize = 1
-
     let currents = aux(ensembleSize, options)
     for (let i = 0; i < currents[0].length; i++){
       let current = []
@@ -245,17 +188,11 @@ function CVdata(maxN, ensembleSize, windowSize, options){
       }
       let meanCurrent = mean(current)
       let varianceCurrent = variance(current)
-      variances.push({x: i, y: varianceCurrent})
-      means.push({x: i, y: meanCurrent})
+      variances.push({x: i * options.timeStep, y: varianceCurrent})
+      means.push({x: i * options.timeStep, y: meanCurrent})
       resultData[meanCurrent] = varianceCurrent
-      //if (resultData[meanCurrent] === undefined){
-      //    resultData[meanCurrent] = varianceCurrent
-      //} else {
-      //    const value = resultData[meanCurrent]
-      //    resultData[meanCurrent] = (value + varianceCurrent) / 2
-      //}
     }
-    return Object.keys(resultData).map(x => ({x: parseFloat(x), y: resultData[x]}))
+    return Object.keys(resultData).map(x => ({x: parseFloat(x), y: resultData[x]})).sort((a, b) => a.x - b.x)
 }
 
 onmessage = (e) => {

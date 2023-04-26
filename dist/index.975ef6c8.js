@@ -581,10 +581,7 @@ function drawTrace(data, elementID, timeStep, title, metadata, alvarez, meansDat
     globalTimeStep = timeStep;
     let newData = [];
     if (!alvarez) newData = transformMeanData(data);
-    else newData = data.map((x)=>({
-            x: x.x * globalTimeStep,
-            y: x.y
-        }));
+    else newData = data;
     return new (0, _autoDefault.default)(document.getElementById(elementID), {
         type: "line",
         data: {
@@ -601,10 +598,7 @@ function drawTrace(data, elementID, timeStep, title, metadata, alvarez, meansDat
                 {
                     type: "line",
                     label: "Mean",
-                    data: !alvarez ? [] : meansData.map((x)=>({
-                            x: x.x * globalTimeStep,
-                            y: x.y
-                        })),
+                    data: !alvarez ? [] : meansData,
                     pointRadius: 0,
                     borderWidth: 1,
                     borderColor: "rgb(255, 99, 132)",
@@ -694,10 +688,7 @@ function traceDataTransform(data, index) {
     return {
         label: "Current",
         type: "line",
-        data: data.map((x, i)=>({
-                x: i * globalTimeStep,
-                y: x + index * maxTraceAmp + (maxTraceAmp - 0.5)
-            })),
+        data: transformMeanData(data.map((x)=>x + index * maxTraceAmp + (maxTraceAmp - 0.5))),
         pointRadius: 0,
         borderColor: colors[index % colors.length],
         borderWidth: 1
@@ -755,18 +746,24 @@ function drawTraces(data, elementID, timeStep, title, metadata) {
         }
     });
 }
-function modelPlotTransform(data, metadata) {
+function modelPlotTransform(data, metadata, min) {
     let resultData = [];
-    for(let i = 0; i < data.length; i++){
-        let modelValue = metadata.modelSingleCurrent * data[i].x - 1 / metadata.modelChannelAmount * (data[i].x * data[i].x);
+    let step = -min / 15;
+    for(let i = min; i <= 0; i += step){
+        let modelValue = metadata.modelSingleCurrent * i - 1 / metadata.modelChannelAmount * (i * i);
         resultData.push({
-            x: data[i].x,
+            x: i,
             y: modelValue
         });
     }
-    return resultData.sort((a, b)=>a.x - b.x);
+    resultData.push({
+        x: 0,
+        y: 0
+    });
+    return resultData;
 }
 function drawScatter(elementID, dataset, model, title, metadata, modelVisibility) {
+    let min = Math.min(...dataset.map((x)=>x.x));
     const data = {
         datasets: [
             {
@@ -779,9 +776,9 @@ function drawScatter(elementID, dataset, model, title, metadata, modelVisibility
             {
                 label: "Model",
                 type: "line",
-                data: modelPlotTransform(dataset, metadata),
+                data: modelPlotTransform(dataset, metadata, min),
                 borderColor: "rgb(54, 162, 235)",
-                pointRadius: 0,
+                radius: 0,
                 order: 1,
                 borderWidth: modelVisibility ? 2 : 0
             }
@@ -789,14 +786,6 @@ function drawScatter(elementID, dataset, model, title, metadata, modelVisibility
     };
     return new (0, _autoDefault.default)(document.getElementById(elementID), {
         data: data,
-        options: {
-            scales: {
-                x: {
-                    type: "linear",
-                    position: "bottom"
-                }
-            }
-        },
         options: {
             animation: false,
             plugins: {
@@ -810,13 +799,23 @@ function drawScatter(elementID, dataset, model, title, metadata, modelVisibility
             },
             scales: {
                 y: {
+                    ticks: {
+                        maxRotation: 0
+                    },
                     min: 0,
+                    max: Math.ceil(Math.max(...dataset.map((x)=>x.y))),
                     title: {
                         display: true,
                         text: "Variance (pA^2)"
                     }
                 },
                 x: {
+                    ticks: {
+                        maxRotation: 0
+                    },
+                    //max: 0,
+                    //min: Math.floor(min),
+                    type: "linear",
                     title: {
                         display: true,
                         text: "Mean (pA)"
@@ -827,21 +826,19 @@ function drawScatter(elementID, dataset, model, title, metadata, modelVisibility
     });
 }
 function updateScatter(chart, data, model, metadata, modelVisibility) {
+    let min = Math.min(...data.map((x)=>x.x));
+    let max = Math.max(...data.map((x)=>x.y));
     chart.data.datasets[0].data = data;
-    chart.data.datasets[1].data = modelPlotTransform(data, metadata);
+    chart.data.datasets[1].data = modelPlotTransform(data, metadata, min);
     chart.data.datasets[1].borderWidth = modelVisibility ? 2 : 0;
+    chart.options.scales.y.max = Math.ceil(max);
+    //chart.options.scales.x.min = Math.floor(min)
     chart.update();
 }
 function updateTrace(chart, data, timeStep, metadata, alvarez, meanData) {
     globalTimeStep = timeStep;
-    chart.data.datasets[0].data = !alvarez ? transformMeanData(data) : data.map((x)=>({
-            x: x.x * globalTimeStep,
-            y: x.y
-        }));
-    chart.data.datasets[1].data = alvarez ? meanData.map((x)=>({
-            x: x.x * globalTimeStep,
-            y: x.y
-        })) : [];
+    chart.data.datasets[0].data = !alvarez ? transformMeanData(data) : data;
+    chart.data.datasets[1].data = alvarez ? meanData : [];
     chart.options.scales.x.max = metadata.maxTime;
     chart.update();
 }
@@ -869,7 +866,7 @@ function defaultMetadata() {
         conductance: 8,
         clist: createClist(8),
         initalState: "C1",
-        timeStep: 0.05,
+        timeStep: 0.1,
         singlechannelNoise: false,
         modelVisibility: false,
         randomSeed: 0,
@@ -939,9 +936,23 @@ function modelToString(metadata) {
     return modelString;
 }
 function estimateSlope(metadata) {
-    metadata.CVdata.map((x)=>x).sort((a, b)=>b.x - a.x);
-    let index = Math.floor(metadata.CVdata.length * 0.95);
-    let result = metadata.CVdata[index].y / metadata.CVdata[index].x;
+    let minX = Math.min(...metadata.CVdata.map((x)=>x.x));
+    let maxX = Math.max(...metadata.CVdata.map((x)=>x.x));
+    let xSum = 0;
+    let ySum = 0;
+    let xxSum = 0;
+    let xySum = 0;
+    let percentage = 0.1;
+    let tempData = metadata.CVdata.filter((x)=>x.x >= minX * percentage);
+    if (tempData.length < 2) tempData = metadata.CVdata.map((x)=>x).sort((a, b)=>b.x - a.x).slice(0, Math.floor(metadata.CVdata.length * 0.2) + 1);
+    let count = tempData.length;
+    tempData.forEach((x)=>{
+        xSum += x.x;
+        ySum += x.y;
+        xxSum += x.x * x.x;
+        xySum += x.x * x.y;
+    });
+    let result = (count * xySum - xSum * ySum) / (count * xxSum - xSum * xSum);
     return result;
 }
 function updateModelParams(update, metadata) {
@@ -960,6 +971,8 @@ function updateModelParams(update, metadata) {
 function defaultMethods() {
     return {
         drawGraphs () {
+            worker.terminate();
+            worker = new Worker(require("d9480e22184999c7"));
             worker.postMessage(getMessage(this));
             worker.onmessage = (e)=>{
                 window.singletraceGraph = drawTraces(e.data.singletraces, "singletraces", e.data.timeStep, "Single Trace Sweeps", e.data);
@@ -973,6 +986,8 @@ function defaultMethods() {
             };
         },
         updateGraphs () {
+            worker.terminate();
+            worker = new Worker(require("d9480e22184999c7"));
             worker.postMessage(getMessage(this));
             worker.onmessage = (e)=>{
                 updateTraces(window.singletraceGraph, e.data.singletraces, e.data.timeStep, e.data);
