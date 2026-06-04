@@ -1,9 +1,9 @@
 {
   "dependencies": {
-    "@cubejs-client/core": "^0.31.0",
+    "@cubejs-client/core": "^1.6.54",
     "chart.js": "^3.9.1",
     "chartjs-plugin-zoom": "^2.0.1",
-    "esbuild": "^0.15.9",
+    "esbuild": "^0.28.0",
     "js-polynomial-regression": "^0.9.1",
     "vue-chartjs": "^4.1.2"
   },
@@ -11,7 +11,7 @@
   "description": "A simulator for a single channel for educational use.",
   "version": "1.0.0",
   "devDependencies": {
-    "parcel": "^2.6.2"
+    "parcel": "^2.16.4"
   },
   "type": "module",
   "scripts": {
@@ -23,7 +23,7 @@
     "type": "git",
     "url": "git+https://github.com/timeolord/single-channel-sim.git"
   },
-  "author": "Allan Wei",
+  "author": "Melody Wei",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/timeolord/single-channel-sim/issues"
