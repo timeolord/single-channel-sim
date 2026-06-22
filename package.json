@@ -15,7 +15,8 @@
   "type": "module",
   "scripts": {
     "dev": "parcel src/index.html",
-    "build": "parcel build src/index.html --public-url ./ --dist-dir ./"
+    "clean": "rm -f index.html *.js *.js.map",
+    "build": "npm run clean && parcel build src/index.html --public-url ./ --dist-dir ./"
   },
   "repository": {
     "type": "git",
