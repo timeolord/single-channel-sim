@@ -16,11 +16,11 @@ function qMatrix(height) {
 function transformMeanData(data){
   let transformedData = data.map((x, i) => ({x: i * globalTimeStep, y: x}))
   for (let i = 1; i < data.length - 1; i++){
-    if (data[i] == data[i - 1] && data[i] == data[i + 1]){
+    if (data[i] === data[i - 1] && data[i] === data[i + 1]){
       transformedData[i].y = null
     }
   }
-  return transformedData.filter(x => x.y != null)
+  return transformedData.filter(x => x.y !== null)
 }
 function drawTrace(data, elementID, timeStep, title, metadata, alvarez, meansData){
   globalTimeStep = timeStep
@@ -315,7 +315,7 @@ function defaultMetadata(){
     qMatrix: qMatrix,
     conductance: 8,
     clist: createClist(8),
-    initalState: "C1",
+    initialState: "C1",
     timeStep: 0.1,
     singlechannelNoise: false,
     modelVisibility: false,
@@ -348,7 +348,7 @@ function defaultWatch(){
     maxTimeNum: "updateGraphs",
     height: "updateGraphs",
     clist: "updateGraphs",
-    initalState: "updateGraphs",
+    initialState: "updateGraphs",
     timeStep: "updateGraphs",
     singlechannelNoise: "updateGraphs",
     singlechannelNoiseNum: "updateGraphs",
@@ -367,7 +367,7 @@ function getMessage(metadata){
     qPause: metadata.qPause,
     conductance: metadata.conductance,
     clist: createClist(metadata.conductance),
-    initalState: metadata.initalState,
+    initialState: metadata.initialState,
     duration: metadata.duration,
     n: metadata.n,
     u: metadata.u,

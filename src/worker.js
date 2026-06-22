@@ -30,12 +30,14 @@ class Random {
     }
   }
 
+let r, variances, means
+
 function range(start, end){
     const length = end - start;
     return Array.from({ length }, (_, i) => start + i);
 }
 function drop(array, n){
-    if (n == 0){
+    if (n === 0){
       return array
     }
     if (n > 0) {
@@ -70,12 +72,12 @@ function generateNoise(noise){
     }
     return gaussianRandom(0, noise);
 }
-function singletrace(qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, timeStep, noise){
+function singletrace(qflatpulse, qflatpause, conductivityList, initialState, duration, u, maxTime, timeStep, noise){
     let timeIncrement = 0
     let time = 0
-    let state = initalState
+    let state = initialState
     let minimumPosition = ""
-    let decayTimes = new Object()
+    let decayTimes = {}
     let current = new Array(Math.floor(maxTime / timeStep))
     current[timeIncrement] = -u*conductivityList[state] + generateNoise(noise); /* current at t = 0 */
   
@@ -134,36 +136,30 @@ function singletrace(qflatpulse, qflatpause, conductivityList, initalState, dura
   
     return current
 }
-function tracetable(qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, timeStep, noise){
-    return range(0, n).map(() => singletrace(qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, timeStep, noise))
+function tracetable(qflatpulse, qflatpause, conductivityList, initialState, duration, n, u, maxTime, timeStep, noise){
+    return range(0, n).map(() => singletrace(qflatpulse, qflatpause, conductivityList, initialState, duration, u, maxTime, timeStep, noise))
 }
 function addvector(a, b){
   return a.map((x, i) => x + b[i])
 }
-function meancurrent(qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, timeStep){
-    let tracetableResult = tracetable(qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, timeStep)
+function meancurrent(qflatpulse, qflatpause, conductivityList, initialState, duration, n, u, maxTime, timeStep){
+    let tracetableResult = tracetable(qflatpulse, qflatpause, conductivityList, initialState, duration, n, u, maxTime, timeStep)
     return tracetableResult.reduce((a, b) => addvector(a, b)).map(x => x / n)
 }
 function sumcurrent(traces, n) {
   return traces.reduce((a, b) => addvector(a, b))//.map(x => x / n)
 }
-function filtertest(ensembleSize, qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, samplingFrequency, cutoffFrequency){
+function filtertest(ensembleSize, qflatpulse, qflatpause, conductivityList, initialState, duration, u, maxTime, samplingFrequency, cutoffFrequency){
     let timeStep = 1 / samplingFrequency
     let sigma = 0.1325 / (cutoffFrequency / samplingFrequency);
     let filterN = Math.round(4 * sigma)
     let filterA = range(-filterN, filterN + 1).map(x => Math.exp(-x*x / (2*sigma*sigma)))
     filterA = filterA.map(x => x / filterA.reduce((a, b) => a + b))
     let sampledCurrent = new Array(filterN).fill(0).concat(
-        meancurrent(qflatpulse, qflatpause, conductivityList, initalState, duration, ensembleSize, u, maxTime + (filterN * timeStep), timeStep).map(x => x * ensembleSize))
+        meancurrent(qflatpulse, qflatpause, conductivityList, initialState, duration, ensembleSize, u, maxTime + (filterN * timeStep), timeStep).map(x => x * ensembleSize))
     let unfilteredCurrent = drop(drop([...sampledCurrent], filterN), -filterN)
     let filteredCurrent = windows([...sampledCurrent], 1 + (2 * filterN), 1).map(x => dot(x, filterA))
     return {"unfilteredCurrent": unfilteredCurrent, "filteredCurrent": filteredCurrent, "timeStep": timeStep}
-}
-function peakEPSCs(ensembleSize, qflatpulse, qflatpause, conductivityList, initalState, duration, n, u, maxTime, samplingFrequency, cutoffFrequency){
-    let peaks = range(0, n).map(() => filtertest(ensembleSize, qflatpulse, qflatpause, conductivityList, initalState, duration, u, maxTime, samplingFrequency, cutoffFrequency).filteredCurrent.reduce((a, b) => Math.min(a, b)))
-    let peakFrequencies = new Array(Math.round(-Math.min(...peaks) * 1.5)).fill(0)
-    peaks.forEach(x => peakFrequencies[-Math.round(x)]++)
-    return peakFrequencies.map(x => x / peakFrequencies.reduce((a, b) => a + b))
 }
 function mean(array){
     return array.reduce((a, b) => a + b) / array.length
@@ -177,7 +173,7 @@ function standardDeviation(array){
 }
 function CVdata(maxN, ensembleSize, windowSize, options){
     function aux(n, options) {
-      return range(0, n).map(() => sumcurrent(tracetable(options.qflatpulse, options.qPause, options.clist, options.initalState, options.duration, options.n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise), options.n))
+      return range(0, n).map(() => sumcurrent(tracetable(options.qflatpulse, options.qPause, options.clist, options.initialState, options.duration, options.n, options.u, options.maxTime, options.timeStep, options.singlechannelNoise), options.n))
     }
     let resultData = []
     let currents = aux(ensembleSize, options)
@@ -198,9 +194,8 @@ function CVdata(maxN, ensembleSize, windowSize, options){
 onmessage = (e) => {
   variances = []
   means = []
-  //e.data.clist = JSON.parse(e.data.clist)
   r = new Random(e.data.randomSeed)
-  e.data.singletraces = tracetable(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initalState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep, e.data.singlechannelNoise)
+  e.data.singletraces = tracetable(e.data.qflatpulse, e.data.qPause, e.data.clist, e.data.initialState, e.data.duration, e.data.n, e.data.u, e.data.maxTime, e.data.timeStep, e.data.singlechannelNoise)
   e.data.meantrace = sumcurrent(e.data.singletraces, e.data.n)
   e.data.stderror = standardDeviation(e.data.meantrace) / Math.sqrt(e.data.n)
   e.data.CVdata = CVdata(e.data.n, e.data.ensembleSize, 1, e.data)
