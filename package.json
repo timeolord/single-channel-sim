@@ -3,7 +3,6 @@
     "@cubejs-client/core": "^1.6.54",
     "chart.js": "^3.9.1",
     "chartjs-plugin-zoom": "^2.0.1",
-    "esbuild": "^0.28.0",
     "js-polynomial-regression": "^0.9.1",
     "vue-chartjs": "^4.1.2"
   },
@@ -15,7 +14,6 @@
   },
   "type": "module",
   "scripts": {
-    "start": "node index.js",
     "dev": "parcel src/index.html",
     "build": "parcel build src/index.html --public-url ./ --dist-dir ./"
   },
