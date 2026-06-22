@@ -4,7 +4,7 @@ A Monte Carlo simulator for AMPA receptor ion channels, intended for educational
 
 Live at [www.melkyway.ca/single-channel-sim](https://www.melkyway.ca/single-channel-sim).
 
-## What it does
+## Overview
 
 The simulator models a single AMPA receptor channel with four kinetic states: three closed states (C1, C2, C3) and one open state (O). It runs a Monte Carlo simulation using the Colquhoun-Hawkes algorithm to generate stochastic single-channel traces, then aggregates them to compute ensemble statistics.
 
@@ -45,7 +45,7 @@ npm run build
 
 The build script cleans previous build artifacts before rebuilding, so old hashed files are removed automatically.
 
-## Tech
+## Architecture
 
 - Vue 3 (via CDN) for reactivity
 - Chart.js with chartjs-plugin-zoom for plots
